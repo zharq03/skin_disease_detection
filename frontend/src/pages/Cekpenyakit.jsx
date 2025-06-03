@@ -4,6 +4,7 @@ function Cekpenyakit() {
   const [image, setImage] = useState(null);
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -20,10 +21,11 @@ function Cekpenyakit() {
       return;
     }
 
+    setIsLoading(true);
     const formData = new FormData();
     const fileInput = document.querySelector('input[type="file"]');
     formData.append('image', fileInput.files[0]);
-// tempat Backendnya atau tempat modulnya 
+
     try {
       const response = await fetch('http://127.0.0.1:5000/predict', {
         method: 'POST',
@@ -34,13 +36,16 @@ function Cekpenyakit() {
         setError(data.error);
         setResult('');
       } else {
-        setResult(data.prediction);
+        const formattedConfidence = (data.confidence * 100).toFixed(2);
+        setResult(`${data.class} (Confidence: ${formattedConfidence}%)`);
         setError('');
       }
     } catch (err) {
       setError('Terjadi kesalahan saat memproses gambar');
       setResult('');
       console.error(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -63,9 +68,10 @@ function Cekpenyakit() {
           )}
           <button
             onClick={handlePredict}
+            disabled={isLoading}
             className="w-full bg-white text-blue-600 border border-blue-600 py-2 px-4 rounded-full hover:bg-blue-600 hover:text-white transition duration-300"
           >
-            Cek
+            {isLoading ? 'Memproses...' : 'Cek'}
           </button>
           {result && (
             <p className="mt-4 text-lg text-gray-800">
